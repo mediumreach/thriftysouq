@@ -1,71 +1,45 @@
 import { useState, useEffect } from 'react';
-import { Zap, Plus, Trash2, RefreshCw, ExternalLink, Code, CheckCircle, AlertCircle, Loader2, Copy, Eye, EyeOff } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { Zap, RefreshCw, ExternalLink, Code, CheckCircle, AlertCircle, Loader2, Copy, Eye, EyeOff, Bot, Terminal, BookOpen, Play } from 'lucide-react';
 
-interface EdgeFunction {
-  id: string;
-  slug: string;
-  name: string;
-  version: number;
-  status: string;
-  created_at: string;
-  updated_at: string;
+interface ApiEndpoint {
+  resource: string;
+  actions: string[];
+  description: string;
 }
 
 export function AdminMCP() {
-  const [functions, setFunctions] = useState<EdgeFunction[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const [showSecrets, setShowSecrets] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'overview' | 'endpoints' | 'examples' | 'test'>('overview');
+  const [testResult, setTestResult] = useState<string | null>(null);
+  const [testLoading, setTestLoading] = useState(false);
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
   const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
-  useEffect(() => {
-    loadFunctions();
-  }, []);
+  const apiEndpoint = `${supabaseUrl}/functions/v1/site-management`;
 
-  const loadFunctions = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const knownFunctions: EdgeFunction[] = [
-        {
-          id: '1',
-          slug: 'stripe-payment',
-          name: 'Stripe Payment',
-          version: 1,
-          status: 'active',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-        {
-          id: '2',
-          slug: 'paypal-payment',
-          name: 'PayPal Payment',
-          version: 1,
-          status: 'active',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-      ];
-      setFunctions(knownFunctions);
-    } catch (err) {
-      setError('Failed to load edge functions');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const endpoints: ApiEndpoint[] = [
+    { resource: 'dashboard', actions: ['get'], description: 'Get site statistics and metrics' },
+    { resource: 'products', actions: ['list', 'get', 'create', 'update', 'delete'], description: 'Manage store products' },
+    { resource: 'categories', actions: ['list', 'create', 'update', 'delete'], description: 'Manage product categories' },
+    { resource: 'orders', actions: ['list', 'get', 'update_status'], description: 'View and manage customer orders' },
+    { resource: 'reviews', actions: ['list', 'approve', 'reject', 'delete'], description: 'Moderate product reviews' },
+    { resource: 'coupons', actions: ['list', 'create', 'update', 'delete'], description: 'Manage discount coupons' },
+    { resource: 'currencies', actions: ['list', 'create', 'update', 'delete'], description: 'Configure supported currencies' },
+    { resource: 'hero_settings', actions: ['get', 'update'], description: 'Update homepage hero banner' },
+    { resource: 'footer_sections', actions: ['list', 'create', 'update', 'delete'], description: 'Manage footer sections' },
+    { resource: 'footer_links', actions: ['list', 'create', 'update', 'delete'], description: 'Manage footer links' },
+    { resource: 'settings', actions: ['get', 'update'], description: 'Update site-wide settings' },
+    { resource: 'webhooks', actions: ['list', 'create', 'update', 'delete'], description: 'Configure webhook integrations' },
+    { resource: 'payment_methods', actions: ['list', 'update'], description: 'Configure payment providers' },
+  ];
 
   const copyToClipboard = async (text: string, key: string) => {
     await navigator.clipboard.writeText(text);
     setCopiedKey(key);
     setTimeout(() => setCopiedKey(null), 2000);
-  };
-
-  const getEndpointUrl = (slug: string) => {
-    return `${supabaseUrl}/functions/v1/${slug}`;
   };
 
   const maskString = (str: string) => {
@@ -74,213 +48,452 @@ export function AdminMCP() {
     return str.substring(0, 4) + '****' + str.substring(str.length - 4);
   };
 
+  const testApi = async () => {
+    setTestLoading(true);
+    setTestResult(null);
+    try {
+      const response = await fetch(apiEndpoint, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ resource: 'dashboard', action: 'get' }),
+      });
+      const data = await response.json();
+      setTestResult(JSON.stringify(data, null, 2));
+    } catch (error) {
+      setTestResult(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setTestLoading(false);
+    }
+  };
+
+  const mcpToolDefinition = `{
+  "name": "manage_thriftysouq",
+  "description": "Manage ThriftySouq e-commerce site - products, orders, settings, content",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "resource": {
+        "type": "string",
+        "enum": ["products", "categories", "orders", "reviews", "coupons",
+                 "currencies", "hero_settings", "footer_sections", "footer_links",
+                 "settings", "webhooks", "payment_methods", "dashboard"],
+        "description": "The resource to manage"
+      },
+      "action": {
+        "type": "string",
+        "description": "Action to perform (list, get, create, update, delete, etc.)"
+      },
+      "id": {
+        "type": "string",
+        "description": "Resource ID for get/update/delete operations"
+      },
+      "data": {
+        "type": "object",
+        "description": "Data for create/update operations"
+      }
+    },
+    "required": ["resource", "action"]
+  }
+}`;
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">MCP & Edge Functions</h1>
-          <p className="text-gray-600 mt-1">Manage your Supabase edge functions and API configuration</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">AI Agent Control Center</h1>
+          <p className="text-gray-600 mt-1">Control your entire site programmatically with AI agents</p>
         </div>
-        <button
-          onClick={loadFunctions}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 shadow-sm"
-        >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          <span className="font-medium">Refresh</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium">
+            MCP Ready
+          </span>
+        </div>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center">
-              <Code className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">API Configuration</h2>
-              <p className="text-sm text-gray-500">Supabase connection details</p>
-            </div>
+      <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-2xl p-6 text-white">
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+            <Bot className="w-6 h-6" />
           </div>
-
-          <div className="space-y-4">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-sm font-medium text-gray-700">Supabase URL</label>
-                <button
-                  onClick={() => copyToClipboard(supabaseUrl, 'url')}
-                  className="text-gray-400 hover:text-emerald-600 transition-colors"
-                >
-                  {copiedKey === 'url' ? <CheckCircle className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
-                </button>
-              </div>
-              <div className="px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 font-mono text-sm text-gray-700 break-all">
-                {supabaseUrl || 'Not configured'}
-              </div>
+          <div>
+            <h2 className="text-xl font-bold mb-2">Site Management API</h2>
+            <p className="text-emerald-100 mb-4">
+              Full programmatic control over your e-commerce site. Connect any AI agent to manage products,
+              orders, content, and settings through a unified API.
+            </p>
+            <div className="flex items-center gap-2 bg-white/10 rounded-lg px-4 py-2">
+              <code className="text-sm flex-1 overflow-x-auto">{apiEndpoint}</code>
+              <button
+                onClick={() => copyToClipboard(apiEndpoint, 'endpoint')}
+                className="p-1 hover:bg-white/20 rounded transition-colors"
+              >
+                {copiedKey === 'endpoint' ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              </button>
             </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-sm font-medium text-gray-700">Anon Key</label>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setShowSecrets(!showSecrets)}
-                    className="text-gray-400 hover:text-emerald-600 transition-colors"
-                  >
-                    {showSecrets ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                  <button
-                    onClick={() => copyToClipboard(supabaseAnonKey, 'anon')}
-                    className="text-gray-400 hover:text-emerald-600 transition-colors"
-                  >
-                    {copiedKey === 'anon' ? <CheckCircle className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-              <div className="px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 font-mono text-sm text-gray-700 break-all">
-                {showSecrets ? supabaseAnonKey : maskString(supabaseAnonKey)}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center">
-              <Zap className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">Quick Actions</h2>
-              <p className="text-sm text-gray-500">Common operations</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={() => window.open('https://supabase.com/dashboard', '_blank')}
-              className="flex flex-col items-center gap-2 p-4 bg-gray-50 hover:bg-emerald-50 rounded-xl border border-gray-200 hover:border-emerald-200 transition-all duration-200 group"
-            >
-              <ExternalLink className="w-5 h-5 text-gray-400 group-hover:text-emerald-600" />
-              <span className="text-sm font-medium text-gray-700 group-hover:text-emerald-700">Dashboard</span>
-            </button>
-            <button
-              onClick={() => window.open(`${supabaseUrl}/functions/v1`, '_blank')}
-              className="flex flex-col items-center gap-2 p-4 bg-gray-50 hover:bg-emerald-50 rounded-xl border border-gray-200 hover:border-emerald-200 transition-all duration-200 group"
-            >
-              <Code className="w-5 h-5 text-gray-400 group-hover:text-emerald-600" />
-              <span className="text-sm font-medium text-gray-700 group-hover:text-emerald-700">Functions API</span>
-            </button>
-            <button
-              onClick={loadFunctions}
-              className="flex flex-col items-center gap-2 p-4 bg-gray-50 hover:bg-emerald-50 rounded-xl border border-gray-200 hover:border-emerald-200 transition-all duration-200 group"
-            >
-              <RefreshCw className="w-5 h-5 text-gray-400 group-hover:text-emerald-600" />
-              <span className="text-sm font-medium text-gray-700 group-hover:text-emerald-700">Refresh</span>
-            </button>
-            <button
-              onClick={() => window.open('https://supabase.com/docs/guides/functions', '_blank')}
-              className="flex flex-col items-center gap-2 p-4 bg-gray-50 hover:bg-emerald-50 rounded-xl border border-gray-200 hover:border-emerald-200 transition-all duration-200 group"
-            >
-              <ExternalLink className="w-5 h-5 text-gray-400 group-hover:text-emerald-600" />
-              <span className="text-sm font-medium text-gray-700 group-hover:text-emerald-700">Docs</span>
-            </button>
           </div>
         </div>
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center">
-              <Zap className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">Edge Functions</h2>
-              <p className="text-sm text-gray-500">{functions.length} deployed functions</p>
-            </div>
-          </div>
+        <div className="border-b border-gray-100">
+          <nav className="flex">
+            {[
+              { id: 'overview', label: 'Overview', icon: BookOpen },
+              { id: 'endpoints', label: 'Endpoints', icon: Code },
+              { id: 'examples', label: 'Examples', icon: Terminal },
+              { id: 'test', label: 'Test API', icon: Play },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as typeof activeTab)}
+                className={`flex items-center gap-2 px-6 py-4 font-medium transition-colors ${
+                  activeTab === tab.id
+                    ? 'text-emerald-600 border-b-2 border-emerald-600 bg-emerald-50/50'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+              >
+                <tab.icon className="w-4 h-4" />
+                {tab.label}
+              </button>
+            ))}
+          </nav>
         </div>
 
-        {loading ? (
-          <div className="p-12 flex items-center justify-center">
-            <Loader2 className="w-8 h-8 text-emerald-600 animate-spin" />
-          </div>
-        ) : error ? (
-          <div className="p-12 text-center">
-            <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
-            <p className="text-gray-600">{error}</p>
-            <button
-              onClick={loadFunctions}
-              className="mt-4 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
-            >
-              Try Again
-            </button>
-          </div>
-        ) : functions.length === 0 ? (
-          <div className="p-12 text-center">
-            <Zap className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-600 mb-2">No edge functions deployed yet</p>
-            <p className="text-sm text-gray-500">Deploy edge functions to extend your application</p>
-          </div>
-        ) : (
-          <div className="divide-y divide-gray-100">
-            {functions.map((func) => (
-              <div key={func.id} className="p-6 hover:bg-gray-50 transition-colors">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <Zap className="w-6 h-6 text-emerald-600" />
-                    </div>
+        <div className="p-6">
+          {activeTab === 'overview' && (
+            <div className="space-y-6">
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-4">API Credentials</h3>
+                  <div className="space-y-4">
                     <div>
-                      <h3 className="font-semibold text-gray-900">{func.name}</h3>
-                      <p className="text-sm text-gray-500 font-mono">{func.slug}</p>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="text-sm font-medium text-gray-700">Supabase URL</label>
+                        <button
+                          onClick={() => copyToClipboard(supabaseUrl, 'url')}
+                          className="text-gray-400 hover:text-emerald-600 transition-colors"
+                        >
+                          {copiedKey === 'url' ? <CheckCircle className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                        </button>
+                      </div>
+                      <div className="px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 font-mono text-sm text-gray-700 break-all">
+                        {supabaseUrl || 'Not configured'}
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      func.status === 'active'
-                        ? 'bg-emerald-100 text-emerald-700'
-                        : 'bg-gray-100 text-gray-600'
-                    }`}>
-                      {func.status}
-                    </span>
-                    <span className="text-sm text-gray-500">v{func.version}</span>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="text-sm font-medium text-gray-700">API Key</label>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setShowSecrets(!showSecrets)}
+                            className="text-gray-400 hover:text-emerald-600 transition-colors"
+                          >
+                            {showSecrets ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                          <button
+                            onClick={() => copyToClipboard(supabaseAnonKey, 'anon')}
+                            className="text-gray-400 hover:text-emerald-600 transition-colors"
+                          >
+                            {copiedKey === 'anon' ? <CheckCircle className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+                      <div className="px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 font-mono text-sm text-gray-700 break-all">
+                        {showSecrets ? supabaseAnonKey : maskString(supabaseAnonKey)}
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="mt-4">
-                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Endpoint</label>
-                  <div className="mt-1 flex items-center gap-2">
-                    <code className="flex-1 px-3 py-2 bg-gray-100 rounded-lg text-sm text-gray-700 font-mono overflow-x-auto">
-                      {getEndpointUrl(func.slug)}
-                    </code>
+
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-4">MCP Tool Definition</h3>
+                  <p className="text-sm text-gray-600 mb-3">
+                    Add this tool definition to your AI agent's capabilities:
+                  </p>
+                  <div className="relative">
+                    <pre className="bg-gray-900 text-gray-100 rounded-xl p-4 overflow-x-auto text-xs max-h-64">
+                      <code>{mcpToolDefinition}</code>
+                    </pre>
                     <button
-                      onClick={() => copyToClipboard(getEndpointUrl(func.slug), func.slug)}
-                      className="p-2 text-gray-400 hover:text-emerald-600 transition-colors flex-shrink-0"
+                      onClick={() => copyToClipboard(mcpToolDefinition, 'mcp')}
+                      className="absolute top-2 right-2 p-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
                     >
-                      {copiedKey === func.slug ? <CheckCircle className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                      {copiedKey === 'mcp' ? <CheckCircle className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-gray-400" />}
                     </button>
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                <h4 className="font-medium text-amber-800 mb-2">Quick Start</h4>
+                <ol className="text-sm text-amber-700 space-y-1 list-decimal list-inside">
+                  <li>Copy the API endpoint and credentials above</li>
+                  <li>Add the MCP tool definition to your AI agent</li>
+                  <li>Make POST requests with resource, action, and optional data/id</li>
+                  <li>Your AI can now fully manage the site!</li>
+                </ol>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'endpoints' && (
+            <div className="space-y-4">
+              <p className="text-gray-600 mb-6">
+                All endpoints accept POST requests to <code className="bg-gray-100 px-2 py-1 rounded">{apiEndpoint}</code>
+              </p>
+              <div className="grid gap-4">
+                {endpoints.map((endpoint) => (
+                  <div key={endpoint.resource} className="border border-gray-200 rounded-xl p-4 hover:border-emerald-200 transition-colors">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h4 className="font-semibold text-gray-900">{endpoint.resource}</h4>
+                        <p className="text-sm text-gray-600 mt-1">{endpoint.description}</p>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {endpoint.actions.map((action) => (
+                        <span
+                          key={action}
+                          className={`px-2 py-1 rounded text-xs font-medium ${
+                            action === 'delete' ? 'bg-red-100 text-red-700' :
+                            action === 'create' ? 'bg-green-100 text-green-700' :
+                            action === 'update' || action === 'update_status' ? 'bg-blue-100 text-blue-700' :
+                            action === 'approve' ? 'bg-emerald-100 text-emerald-700' :
+                            action === 'reject' ? 'bg-orange-100 text-orange-700' :
+                            'bg-gray-100 text-gray-700'
+                          }`}
+                        >
+                          {action}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'examples' && (
+            <div className="space-y-6">
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-3">List all products</h4>
+                <pre className="bg-gray-900 text-gray-100 rounded-xl p-4 overflow-x-auto text-sm">
+                  <code>{`fetch('${apiEndpoint}', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_API_KEY',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    resource: 'products',
+    action: 'list'
+  })
+})`}</code>
+                </pre>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-3">Create a new product</h4>
+                <pre className="bg-gray-900 text-gray-100 rounded-xl p-4 overflow-x-auto text-sm">
+                  <code>{`fetch('${apiEndpoint}', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_API_KEY',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    resource: 'products',
+    action: 'create',
+    data: {
+      name: 'New Product',
+      description: 'Product description',
+      price: 29.99,
+      stock_quantity: 100,
+      category_id: 'category-uuid'
+    }
+  })
+})`}</code>
+                </pre>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-3">Update order status</h4>
+                <pre className="bg-gray-900 text-gray-100 rounded-xl p-4 overflow-x-auto text-sm">
+                  <code>{`fetch('${apiEndpoint}', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_API_KEY',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    resource: 'orders',
+    action: 'update_status',
+    id: 'order-uuid',
+    data: { status: 'shipped' }
+  })
+})`}</code>
+                </pre>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-3">Update hero banner</h4>
+                <pre className="bg-gray-900 text-gray-100 rounded-xl p-4 overflow-x-auto text-sm">
+                  <code>{`fetch('${apiEndpoint}', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_API_KEY',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    resource: 'hero_settings',
+    action: 'update',
+    data: {
+      title: 'Summer Sale!',
+      subtitle: 'Up to 50% off selected items',
+      button_text: 'Shop Now',
+      background_image: 'https://...'
+    }
+  })
+})`}</code>
+                </pre>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-3">Get dashboard stats</h4>
+                <pre className="bg-gray-900 text-gray-100 rounded-xl p-4 overflow-x-auto text-sm">
+                  <code>{`fetch('${apiEndpoint}', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_API_KEY',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    resource: 'dashboard',
+    action: 'get'
+  })
+})`}</code>
+                </pre>
+              </div>
+
+              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+                <h4 className="font-medium text-emerald-800 mb-2">AI Agent Prompt Example</h4>
+                <p className="text-sm text-emerald-700 mb-3">
+                  Here's how an AI agent might use this API:
+                </p>
+                <pre className="bg-white rounded-lg p-4 text-sm text-gray-800 overflow-x-auto">
+                  <code>{`User: "Create a 20% off coupon for the summer sale"
+
+AI Agent Action:
+{
+  "tool": "manage_thriftysouq",
+  "parameters": {
+    "resource": "coupons",
+    "action": "create",
+    "data": {
+      "code": "SUMMER20",
+      "discount_type": "percentage",
+      "discount_value": 20,
+      "is_active": true,
+      "expires_at": "2024-09-01T00:00:00Z"
+    }
+  }
+}`}</code>
+                </pre>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'test' && (
+            <div className="space-y-6">
+              <div className="bg-gray-50 rounded-xl p-6">
+                <h4 className="font-semibold text-gray-900 mb-4">Test API Connection</h4>
+                <p className="text-gray-600 mb-4">
+                  Click the button below to test the API by fetching dashboard statistics.
+                </p>
+                <button
+                  onClick={testApi}
+                  disabled={testLoading}
+                  className="flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                >
+                  {testLoading ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Play className="w-5 h-5" />
+                  )}
+                  {testLoading ? 'Testing...' : 'Test Dashboard Endpoint'}
+                </button>
+              </div>
+
+              {testResult && (
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-3">Response</h4>
+                  <pre className="bg-gray-900 text-gray-100 rounded-xl p-4 overflow-x-auto text-sm max-h-96">
+                    <code>{testResult}</code>
+                  </pre>
+                </div>
+              )}
+
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <h4 className="font-medium text-blue-800 mb-2">Interactive Testing</h4>
+                <p className="text-sm text-blue-700">
+                  For more advanced testing, use tools like Postman, Insomnia, or curl to make
+                  requests to the API with different resources and actions.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl border border-emerald-100 p-6">
-        <h3 className="font-semibold text-emerald-900 mb-3">Usage Example</h3>
-        <pre className="bg-gray-900 text-gray-100 rounded-xl p-4 overflow-x-auto text-sm">
-          <code>{`const response = await fetch(
-  '${supabaseUrl}/functions/v1/stripe-payment',
-  {
-    method: 'POST',
-    headers: {
-      'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ amount: 1000 }),
-  }
-);`}</code>
-        </pre>
+      <div className="grid md:grid-cols-3 gap-6">
+        <a
+          href="https://supabase.com/dashboard"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-200 hover:border-emerald-200 hover:shadow-md transition-all"
+        >
+          <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+            <ExternalLink className="w-5 h-5 text-emerald-600" />
+          </div>
+          <div>
+            <p className="font-medium text-gray-900">Supabase Dashboard</p>
+            <p className="text-sm text-gray-600">Manage database directly</p>
+          </div>
+        </a>
+
+        <a
+          href="https://supabase.com/docs/guides/functions"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-200 hover:border-emerald-200 hover:shadow-md transition-all"
+        >
+          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+            <BookOpen className="w-5 h-5 text-blue-600" />
+          </div>
+          <div>
+            <p className="font-medium text-gray-900">Edge Functions Docs</p>
+            <p className="text-sm text-gray-600">Learn about edge functions</p>
+          </div>
+        </a>
+
+        <a
+          href="https://modelcontextprotocol.io/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-200 hover:border-emerald-200 hover:shadow-md transition-all"
+        >
+          <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+            <Bot className="w-5 h-5 text-purple-600" />
+          </div>
+          <div>
+            <p className="font-medium text-gray-900">MCP Documentation</p>
+            <p className="text-sm text-gray-600">Model Context Protocol</p>
+          </div>
+        </a>
       </div>
     </div>
   );
