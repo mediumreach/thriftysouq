@@ -1,0 +1,15 @@
+{
+  "name": "thriftysouq-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP Server for ThriftySouq E-commerce Site Management",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@supabase/supabase-js": "^2.57.4"
+  }
+}
