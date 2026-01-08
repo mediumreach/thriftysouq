@@ -9,7 +9,21 @@ import { CartSidebar } from './components/CartSidebar';
 import { Checkout } from './components/Checkout';
 import { Admin } from './components/admin/Admin';
 import { InfoModal } from './components/InfoModal';
-import { Product } from './lib/supabase';
+import { Product, supabase } from './lib/supabase';
+
+interface FooterSection {
+  id: string;
+  title: string;
+  display_order: number;
+}
+
+interface FooterLink {
+  id: string;
+  section_id: string;
+  label: string;
+  url: string;
+  display_order: number;
+}
 
 function App() {
   const [view, setView] = useState<'store' | 'admin'>('store');
@@ -18,6 +32,8 @@ function App() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [categorySlug, setCategorySlug] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [footerSections, setFooterSections] = useState<FooterSection[]>([]);
+  const [footerLinks, setFooterLinks] = useState<FooterLink[]>([]);
   const [infoModal, setInfoModal] = useState<{
     isOpen: boolean;
     type: 'contact' | 'shipping' | 'returns' | 'faq' | 'about' | 'privacy' | 'terms' | null;
@@ -28,7 +44,22 @@ function App() {
     if (path === '#admin') {
       setView('admin');
     }
+    loadFooterData();
   }, []);
+
+  const loadFooterData = async () => {
+    try {
+      const [sectionsRes, linksRes] = await Promise.all([
+        supabase.from('footer_sections').select('*').eq('is_active', true).order('display_order'),
+        supabase.from('footer_links').select('*').eq('is_active', true).order('display_order'),
+      ]);
+
+      if (sectionsRes.data) setFooterSections(sectionsRes.data);
+      if (linksRes.data) setFooterLinks(linksRes.data);
+    } catch (error) {
+      console.error('Error loading footer data:', error);
+    }
+  };
 
   const handleCheckout = () => {
     setCartOpen(false);
@@ -288,78 +319,25 @@ function App() {
                   </div>
                 </div>
 
-                <div>
-                  <h4 className="font-semibold mb-4 text-emerald-400">Shop</h4>
-                  <ul className="space-y-3 text-gray-400">
-                    <li>
-                      <button onClick={() => setCategorySlug('jewelry')} className="hover:text-emerald-400 transition-colors">
-                        Jewelry
-                      </button>
-                    </li>
-                    <li>
-                      <button onClick={() => setCategorySlug('watches')} className="hover:text-emerald-400 transition-colors">
-                        Watches
-                      </button>
-                    </li>
-                    <li>
-                      <button onClick={() => setCategorySlug('clothing')} className="hover:text-emerald-400 transition-colors">
-                        Clothing
-                      </button>
-                    </li>
-                    <li>
-                      <button onClick={() => setCategorySlug('accessories')} className="hover:text-emerald-400 transition-colors">
-                        Accessories
-                      </button>
-                    </li>
-                  </ul>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold mb-4 text-emerald-400">Support</h4>
-                  <ul className="space-y-3 text-gray-400">
-                    <li>
-                      <button onClick={() => openInfoModal('contact')} className="hover:text-emerald-400 transition-colors">
-                        Contact Us
-                      </button>
-                    </li>
-                    <li>
-                      <button onClick={() => openInfoModal('shipping')} className="hover:text-emerald-400 transition-colors">
-                        Shipping Info
-                      </button>
-                    </li>
-                    <li>
-                      <button onClick={() => openInfoModal('returns')} className="hover:text-emerald-400 transition-colors">
-                        Returns
-                      </button>
-                    </li>
-                    <li>
-                      <button onClick={() => openInfoModal('faq')} className="hover:text-emerald-400 transition-colors">
-                        FAQ
-                      </button>
-                    </li>
-                  </ul>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold mb-4 text-emerald-400">Company</h4>
-                  <ul className="space-y-3 text-gray-400">
-                    <li>
-                      <button onClick={() => openInfoModal('about')} className="hover:text-emerald-400 transition-colors">
-                        About Us
-                      </button>
-                    </li>
-                    <li>
-                      <button onClick={() => openInfoModal('privacy')} className="hover:text-emerald-400 transition-colors">
-                        Privacy Policy
-                      </button>
-                    </li>
-                    <li>
-                      <button onClick={() => openInfoModal('terms')} className="hover:text-emerald-400 transition-colors">
-                        Terms of Service
-                      </button>
-                    </li>
-                  </ul>
-                </div>
+                {footerSections.map((section) => (
+                  <div key={section.id}>
+                    <h4 className="font-semibold mb-4 text-emerald-400">{section.title}</h4>
+                    <ul className="space-y-3 text-gray-400">
+                      {footerLinks
+                        .filter(link => link.section_id === section.id)
+                        .map((link) => (
+                          <li key={link.id}>
+                            <a
+                              href={link.url}
+                              className="hover:text-emerald-400 transition-colors"
+                            >
+                              {link.label}
+                            </a>
+                          </li>
+                        ))}
+                    </ul>
+                  </div>
+                ))}
               </div>
 
               <div className="border-t border-emerald-900/50 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">

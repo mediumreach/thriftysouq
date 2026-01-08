@@ -17,6 +17,7 @@ import {
   Settings,
   Zap,
   Store,
+  Link2,
 } from 'lucide-react';
 import { useAdmin } from '../../contexts/AdminContext';
 
@@ -42,6 +43,7 @@ export function AdminLayout({ children, currentPage, onPageChange }: AdminLayout
     { name: 'Import/Export', icon: Download, page: 'import-export' },
     { name: 'MCP & Functions', icon: Zap, page: 'mcp' },
     { name: 'Hero Settings', icon: Palette, page: 'hero-settings' },
+    { name: 'Footer', icon: Link2, page: 'footer' },
     { name: 'Admin Users', icon: Users, page: 'users' },
     { name: 'Settings', icon: Settings, page: 'settings' },
   ];
