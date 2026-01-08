@@ -494,9 +494,35 @@ const tools = [
       properties: {
         title: { type: "string", description: "Hero title" },
         subtitle: { type: "string", description: "Hero subtitle" },
-        background_image: { type: "string", description: "Background image URL" },
-        cta_text: { type: "string", description: "Call to action button text" },
-        cta_link: { type: "string", description: "Call to action link" },
+        badge_text: { type: "string", description: "Badge text above title" },
+        background_image_url: { type: "string", description: "Background image URL" },
+        primary_button_text: { type: "string", description: "Primary button text" },
+        primary_button_link: { type: "string", description: "Primary button link" },
+        secondary_button_text: { type: "string", description: "Secondary button text" },
+        secondary_button_link: { type: "string", description: "Secondary button link" },
+        features: { 
+          type: "array", 
+          description: "Feature highlights array with icon and text",
+          items: {
+            type: "object",
+            properties: {
+              icon: { type: "string", description: "Icon name (truck, shield, refresh)" },
+              text: { type: "string", description: "Feature text" }
+            }
+          }
+        },
+        stats: { 
+          type: "array", 
+          description: "Stats cards array with value, label, and icon",
+          items: {
+            type: "object",
+            properties: {
+              value: { type: "string", description: "Stat value (e.g., 10K+)" },
+              label: { type: "string", description: "Stat label" },
+              icon: { type: "string", description: "Icon name (users, package, star)" }
+            }
+          }
+        },
         is_active: { type: "boolean", description: "Show hero section" },
       },
     },

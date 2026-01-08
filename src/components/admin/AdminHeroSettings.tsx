@@ -13,6 +13,7 @@ interface HeroSettings {
   secondary_button_text: string;
   secondary_button_link: string;
   features: Array<{ icon: string; text: string }>;
+  stats: Array<{ value: string; label: string; icon: string }>;
   gradient_colors: {
     from: string;
     via: string;
@@ -36,6 +37,11 @@ export function AdminHeroSettings() {
       { icon: 'truck', text: 'Free Shipping' },
       { icon: 'shield', text: 'Secure Payment' },
       { icon: 'refresh', text: 'Easy Returns' },
+    ],
+    stats: [
+      { value: '10K+', label: 'Happy Customers', icon: 'users' },
+      { value: '500+', label: 'Products', icon: 'package' },
+      { value: '4.9', label: 'Rating', icon: 'star' },
     ],
     gradient_colors: {
       from: 'emerald-900',
@@ -83,10 +89,35 @@ export function AdminHeroSettings() {
             secondary_button_text: settings.secondary_button_text,
             secondary_button_link: settings.secondary_button_link,
             features: settings.features,
+            stats: settings.stats,
             gradient_colors: settings.gradient_colors,
             updated_at: new Date().toISOString(),
           })
           .eq('id', settings.id);
+      } else {
+        // Create new hero settings if none exist
+        const { data } = await supabase
+          .from('hero_settings')
+          .insert([{
+            title: settings.title,
+            subtitle: settings.subtitle,
+            badge_text: settings.badge_text,
+            background_image_url: settings.background_image_url,
+            primary_button_text: settings.primary_button_text,
+            primary_button_link: settings.primary_button_link,
+            secondary_button_text: settings.secondary_button_text,
+            secondary_button_link: settings.secondary_button_link,
+            features: settings.features,
+            stats: settings.stats,
+            gradient_colors: settings.gradient_colors,
+            is_active: true,
+          }])
+          .select()
+          .single();
+        
+        if (data) {
+          setSettings({ ...settings, id: data.id });
+        }
       }
       alert('Hero settings saved successfully!');
     } catch (error) {
@@ -113,6 +144,26 @@ export function AdminHeroSettings() {
     setSettings({
       ...settings,
       features: settings.features.filter((_, i) => i !== index),
+    });
+  };
+
+  const updateStat = (index: number, field: 'value' | 'label' | 'icon', value: string) => {
+    const newStats = [...settings.stats];
+    newStats[index] = { ...newStats[index], [field]: value };
+    setSettings({ ...settings, stats: newStats });
+  };
+
+  const addStat = () => {
+    setSettings({
+      ...settings,
+      stats: [...settings.stats, { value: '0', label: 'New Stat', icon: 'star' }],
+    });
+  };
+
+  const removeStat = (index: number) => {
+    setSettings({
+      ...settings,
+      stats: settings.stats.filter((_, i) => i !== index),
     });
   };
 
@@ -267,6 +318,59 @@ export function AdminHeroSettings() {
                 </div>
               ))}
             </div>
+            <p className="text-xs text-gray-500 mt-2">Available icons: truck, shield, refresh, check</p>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">Stats Cards</h2>
+              <button
+                onClick={addStat}
+                className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+              >
+                Add Stat
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {settings.stats?.map((stat, index) => (
+                <div key={index} className="flex gap-2">
+                  <input
+                    type="text"
+                    value={stat.value}
+                    onChange={(e) => updateStat(index, 'value', e.target.value)}
+                    placeholder="Value (e.g., 10K+)"
+                    className="w-24 px-3 py-2 border border-gray-300 rounded-md"
+                  />
+                  <input
+                    type="text"
+                    value={stat.label}
+                    onChange={(e) => updateStat(index, 'label', e.target.value)}
+                    placeholder="Label"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md"
+                  />
+                  <select
+                    value={stat.icon}
+                    onChange={(e) => updateStat(index, 'icon', e.target.value)}
+                    className="w-32 px-3 py-2 border border-gray-300 rounded-md"
+                  >
+                    <option value="users">Users</option>
+                    <option value="package">Package</option>
+                    <option value="star">Star</option>
+                    <option value="heart">Heart</option>
+                    <option value="shopping-cart">Cart</option>
+                    <option value="truck">Truck</option>
+                  </select>
+                  <button
+                    onClick={() => removeStat(index)}
+                    className="px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-gray-500 mt-2">These stats appear on the right side of the hero section</p>
           </div>
         </div>
 
