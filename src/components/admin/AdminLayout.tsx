@@ -65,11 +65,11 @@ export function AdminLayout({ children, currentPage, onPageChange }: AdminLayout
       )}
 
       <aside
-        className={`fixed top-0 left-0 h-full w-64 bg-gradient-to-b from-white to-gray-50 border-r border-gray-200 z-40 transform transition-transform duration-300 ${
+        className={`fixed top-0 left-0 h-full w-64 bg-gradient-to-b from-white to-gray-50 border-r border-gray-200 z-40 transform transition-transform duration-300 flex flex-col ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         } lg:translate-x-0 shadow-xl`}
       >
-        <div className="p-6 border-b border-gray-200">
+        <div className="p-6 border-b border-gray-200 flex-shrink-0">
           <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
             ThriftySouq
           </h1>
@@ -78,7 +78,7 @@ export function AdminLayout({ children, currentPage, onPageChange }: AdminLayout
           </p>
         </div>
 
-        <nav className="p-4 space-y-1">
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {navigation.map(item => {
             const Icon = item.icon;
             const isActive = currentPage === item.page;
@@ -102,7 +102,7 @@ export function AdminLayout({ children, currentPage, onPageChange }: AdminLayout
           })}
         </nav>
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-gray-50">
+        <div className="flex-shrink-0 p-4 border-t border-gray-200 bg-gray-50">
           <button
             onClick={logout}
             className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors font-medium"

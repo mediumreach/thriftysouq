@@ -3,8 +3,6 @@ import { X, CreditCard, Loader2, Banknote, Wallet, Building2 } from 'lucide-reac
 import { useCart } from '../contexts/CartContext';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { supabase } from '../lib/supabase';
-import { loadStripe } from '@stripe/stripe-js';
-import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
 
 interface PaymentMethod {
   id: string;
@@ -26,10 +24,6 @@ export function Checkout({ isOpen, onClose }: CheckoutProps) {
   const [orderComplete, setOrderComplete] = useState(false);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('');
-  const [stripePublicKey, setStripePublicKey] = useState<string>('');
-  const [paypalClientId, setPaypalClientId] = useState<string>('');
-  const [showPaymentUI, setShowPaymentUI] = useState(false);
-  const [orderId, setOrderId] = useState<string>('');
 
   const [formData, setFormData] = useState({
     email: '',
@@ -45,7 +39,6 @@ export function Checkout({ isOpen, onClose }: CheckoutProps) {
   useEffect(() => {
     if (isOpen) {
       loadPaymentMethods();
-      loadApiKeys();
     }
   }, [isOpen]);
 
@@ -64,34 +57,6 @@ export function Checkout({ isOpen, onClose }: CheckoutProps) {
       }
     } catch (error) {
       console.error('Error loading payment methods:', error);
-    }
-  };
-
-  const loadApiKeys = async () => {
-    try {
-      const { data: stripeKey } = await supabase
-        .from('api_keys')
-        .select('key_public')
-        .eq('provider', 'stripe')
-        .eq('is_active', true)
-        .maybeSingle();
-
-      if (stripeKey) {
-        setStripePublicKey(stripeKey.key_public);
-      }
-
-      const { data: paypalKey } = await supabase
-        .from('api_keys')
-        .select('key_public')
-        .eq('provider', 'paypal')
-        .eq('is_active', true)
-        .maybeSingle();
-
-      if (paypalKey) {
-        setPaypalClientId(paypalKey.key_public);
-      }
-    } catch (error) {
-      console.error('Error loading API keys:', error);
     }
   };
 
@@ -159,63 +124,17 @@ export function Checkout({ isOpen, onClose }: CheckoutProps) {
         }]);
       }
 
-      setOrderId(order.id);
-
-      const selectedMethod = paymentMethods.find(m => m.id === selectedPaymentMethod);
-      if (selectedMethod?.code === 'stripe' || selectedMethod?.code === 'paypal') {
-        setShowPaymentUI(true);
-      } else {
-        setOrderComplete(true);
-        clearCart();
-        setTimeout(() => {
-          setOrderComplete(false);
-          onClose();
-        }, 3000);
-      }
-    } catch (error) {
-      alert('Error creating order: ' + (error as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleStripePayment = async () => {
-    if (!stripePublicKey || !orderId) return;
-
-    const stripe = await loadStripe(stripePublicKey);
-    if (!stripe) return;
-
-    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-payment`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-      },
-      body: JSON.stringify({
-        action: 'create_payment_intent',
-        orderId,
-        amount: getTotalPrice() * 1.1,
-        currency: currency?.code || 'USD',
-      }),
-    });
-
-    const { clientSecret } = await response.json();
-
-    const { error } = await stripe.confirmCardPayment(clientSecret, {
-      payment_method: {
-        card: {
-          token: 'tok_visa',
-        },
-      },
-    });
-
-    if (!error) {
       setOrderComplete(true);
       clearCart();
+
       setTimeout(() => {
         setOrderComplete(false);
         onClose();
       }, 3000);
+    } catch (error) {
+      alert('Error creating order: ' + (error as Error).message);
+    } finally {
+      setLoading(false);
     }
   };
 

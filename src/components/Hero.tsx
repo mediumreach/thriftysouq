@@ -68,7 +68,7 @@ export function Hero() {
   };
 
   return (
-    <div className={`relative bg-gradient-to-br from-${settings.gradient_colors.from} via-${settings.gradient_colors.via} to-${settings.gradient_colors.to} text-white overflow-hidden`}>
+    <div className="relative bg-gradient-to-br from-emerald-900 via-teal-900 to-gray-900 text-white overflow-hidden">
       <div className="absolute inset-0">
         <div
           className="absolute inset-0 bg-cover bg-center opacity-20"
