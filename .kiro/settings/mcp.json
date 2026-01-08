@@ -1,0 +1,28 @@
+{
+  "mcpServers": {
+    "thriftysouq": {
+      "command": "node",
+      "args": ["mcp-server/index.js"],
+      "env": {
+        "SUPABASE_URL": "${VITE_SUPABASE_URL}",
+        "SUPABASE_SERVICE_KEY": "${SUPABASE_SERVICE_KEY}"
+      },
+      "disabled": false,
+      "autoApprove": [
+        "list_products",
+        "list_categories",
+        "list_orders",
+        "list_customers",
+        "list_reviews",
+        "list_coupons",
+        "list_currencies",
+        "get_dashboard_stats",
+        "get_store_settings",
+        "get_hero_settings",
+        "list_footer_sections",
+        "list_payment_methods",
+        "list_admin_users"
+      ]
+    }
+  }
+}

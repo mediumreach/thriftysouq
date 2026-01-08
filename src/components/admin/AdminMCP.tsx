@@ -69,35 +69,70 @@ export function AdminMCP() {
     }
   };
 
-  const mcpToolDefinition = `{
-  "name": "manage_thriftysouq",
-  "description": "Manage ThriftySouq e-commerce site - products, orders, settings, content",
-  "parameters": {
-    "type": "object",
-    "properties": {
-      "resource": {
-        "type": "string",
-        "enum": ["products", "categories", "orders", "reviews", "coupons",
-                 "currencies", "hero_settings", "footer_sections", "footer_links",
-                 "settings", "webhooks", "payment_methods", "dashboard"],
-        "description": "The resource to manage"
-      },
-      "action": {
-        "type": "string",
-        "description": "Action to perform (list, get, create, update, delete, etc.)"
-      },
-      "id": {
-        "type": "string",
-        "description": "Resource ID for get/update/delete operations"
-      },
-      "data": {
-        "type": "object",
-        "description": "Data for create/update operations"
+  const mcpConfig = `{
+  "mcpServers": {
+    "thriftysouq": {
+      "command": "node",
+      "args": ["mcp-server/index.js"],
+      "env": {
+        "SUPABASE_URL": "your-supabase-url",
+        "SUPABASE_SERVICE_KEY": "your-service-key"
       }
-    },
-    "required": ["resource", "action"]
+    }
   }
 }`;
+
+  const mcpToolDefinition = `Available MCP Tools:
+
+PRODUCTS:
+- list_products: List products with filtering (category, status, search)
+- get_product: Get product by ID or slug
+- create_product: Create new product
+- update_product: Update existing product
+- delete_product: Delete product
+- update_stock: Update stock quantity
+
+CATEGORIES:
+- list_categories: List all categories
+- create_category: Create category
+- update_category: Update category
+- delete_category: Delete category
+
+ORDERS:
+- list_orders: List orders with filtering
+- get_order: Get order with items
+- update_order_status: Update status (pending/processing/shipped/delivered/cancelled)
+- update_payment_status: Update payment status
+- add_order_note: Add note to order
+
+REVIEWS:
+- list_reviews: List reviews with filtering
+- approve_review: Approve/unapprove review
+- respond_to_review: Add admin response
+- delete_review: Delete review
+
+COUPONS:
+- list_coupons: List all coupons
+- create_coupon: Create coupon
+- update_coupon: Update coupon
+- delete_coupon: Delete coupon
+
+ANALYTICS:
+- get_dashboard_stats: Get all dashboard statistics
+- get_sales_report: Get sales report for date range
+- get_top_products: Get top products by sales/rating
+- get_low_stock_products: Get low stock alerts
+
+SETTINGS:
+- get_store_settings / update_store_settings
+- get_hero_settings / update_hero_settings
+- list_footer_sections / create_footer_section
+- create_footer_link / update_footer_link / delete_footer_link
+
+ADMIN:
+- list_admin_users / create_admin_user / update_admin_user / delete_admin_user
+- list_currencies / create_currency / update_currency / delete_currency
+- list_payment_methods / create_payment_method / update_payment_method`;
 
   return (
     <div className="space-y-8">
@@ -118,12 +153,21 @@ export function AdminMCP() {
           <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
             <Bot className="w-6 h-6" />
           </div>
-          <div>
-            <h2 className="text-xl font-bold mb-2">Site Management API</h2>
+          <div className="flex-1">
+            <h2 className="text-xl font-bold mb-2">MCP Server for AI Agents</h2>
             <p className="text-emerald-100 mb-4">
-              Full programmatic control over your e-commerce site. Connect any AI agent to manage products,
-              orders, content, and settings through a unified API.
+              Full programmatic control over your e-commerce site via Model Context Protocol. 
+              Connect Claude, GPT, or any MCP-compatible AI agent to manage products, orders, content, and settings.
             </p>
+            <div className="flex items-center gap-2 bg-white/10 rounded-lg px-4 py-2 mb-3">
+              <code className="text-sm flex-1 overflow-x-auto">node mcp-server/index.js</code>
+              <button
+                onClick={() => copyToClipboard('node mcp-server/index.js', 'cmd')}
+                className="p-1 hover:bg-white/20 rounded transition-colors"
+              >
+                {copiedKey === 'cmd' ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              </button>
+            </div>
             <div className="flex items-center gap-2 bg-white/10 rounded-lg px-4 py-2">
               <code className="text-sm flex-1 overflow-x-auto">{apiEndpoint}</code>
               <button
@@ -210,19 +254,19 @@ export function AdminMCP() {
                 </div>
 
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-4">MCP Tool Definition</h3>
+                  <h3 className="font-semibold text-gray-900 mb-4">MCP Configuration</h3>
                   <p className="text-sm text-gray-600 mb-3">
-                    Add this tool definition to your AI agent's capabilities:
+                    Add this to your <code className="bg-gray-100 px-1 rounded">.kiro/settings/mcp.json</code>:
                   </p>
                   <div className="relative">
                     <pre className="bg-gray-900 text-gray-100 rounded-xl p-4 overflow-x-auto text-xs max-h-64">
-                      <code>{mcpToolDefinition}</code>
+                      <code>{mcpConfig}</code>
                     </pre>
                     <button
-                      onClick={() => copyToClipboard(mcpToolDefinition, 'mcp')}
+                      onClick={() => copyToClipboard(mcpConfig, 'mcp-config')}
                       className="absolute top-2 right-2 p-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
                     >
-                      {copiedKey === 'mcp' ? <CheckCircle className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-gray-400" />}
+                      {copiedKey === 'mcp-config' ? <CheckCircle className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-gray-400" />}
                     </button>
                   </div>
                 </div>
