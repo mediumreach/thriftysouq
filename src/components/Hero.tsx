@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowRight, Truck, Shield, RefreshCw, Sparkles, Star, Users, Package } from 'lucide-react';
+import { ArrowRight, Truck, Shield, RefreshCw, Sparkles, Star, Users, Package, Heart, ShoppingCart } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface HeroSettings {
@@ -12,12 +12,22 @@ interface HeroSettings {
   secondary_button_text: string;
   secondary_button_link: string;
   features: Array<{ icon: string; text: string }>;
+  stats: Array<{ value: string; label: string; icon: string }>;
 }
 
 const iconMap: Record<string, React.ReactNode> = {
   truck: <Truck className="w-5 h-5" />,
   shield: <Shield className="w-5 h-5" />,
   refresh: <RefreshCw className="w-5 h-5" />,
+};
+
+const statsIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  users: Users,
+  package: Package,
+  star: Star,
+  heart: Heart,
+  'shopping-cart': ShoppingCart,
+  truck: Truck,
 };
 
 export function Hero() {
@@ -34,6 +44,11 @@ export function Hero() {
       { icon: 'truck', text: 'Free Shipping' },
       { icon: 'shield', text: 'Secure Payment' },
       { icon: 'refresh', text: 'Easy Returns' },
+    ],
+    stats: [
+      { value: '10K+', label: 'Happy Customers', icon: 'users' },
+      { value: '500+', label: 'Products', icon: 'package' },
+      { value: '4.9', label: 'Rating', icon: 'star' },
     ],
   });
   const [isLoaded, setIsLoaded] = useState(false);
@@ -72,10 +87,11 @@ export function Hero() {
     }
   };
 
-  const stats = [
-    { value: '10K+', label: 'Happy Customers', icon: Users },
-    { value: '500+', label: 'Products', icon: Package },
-    { value: '4.9', label: 'Rating', icon: Star },
+  // Use stats from settings, with fallback defaults
+  const stats = settings.stats || [
+    { value: '10K+', label: 'Happy Customers', icon: 'users' },
+    { value: '500+', label: 'Products', icon: 'package' },
+    { value: '4.9', label: 'Rating', icon: 'star' },
   ];
 
   return (
@@ -159,7 +175,7 @@ export function Hero() {
             {/* Right Stats - Desktop */}
             <div className="hidden lg:flex lg:col-span-5 xl:col-span-4 flex-col gap-4 items-end">
               {stats.map((stat, index) => {
-                const Icon = stat.icon;
+                const Icon = statsIconMap[stat.icon] || Users;
                 return (
                   <div
                     key={index}
@@ -184,7 +200,7 @@ export function Hero() {
           {/* Mobile Stats */}
           <div className="grid grid-cols-3 gap-3 mt-8 lg:hidden">
             {stats.map((stat, index) => {
-              const Icon = stat.icon;
+              const Icon = statsIconMap[stat.icon] || Users;
               return (
                 <div
                   key={index}
