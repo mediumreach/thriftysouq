@@ -26,7 +26,7 @@ const iconMap: Record<string, React.ReactNode> = {
 
 export function Checkout({ isOpen, onClose }: CheckoutProps) {
   const { items, getTotalPrice, clearCart } = useCart();
-  const { formatPrice, currency } = useCurrency();
+  const { formatPrice } = useCurrency();
   const [loading, setLoading] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderNumber, setOrderNumber] = useState('');
@@ -117,25 +117,54 @@ export function Checkout({ isOpen, onClose }: CheckoutProps) {
     setLoading(true);
 
     try {
-      // Create customer
-      const { data: customer, error: customerError } = await supabase
+      // First, check if customer already exists
+      let customerId: string;
+      
+      const { data: existingCustomer } = await supabase
         .from('customers')
-        .insert([{
-          email: formData.email,
-          first_name: formData.firstName,
-          last_name: formData.lastName,
-          phone: formData.phone,
-          shipping_address: {
-            address: formData.address,
-            city: formData.city,
-            postalCode: formData.postalCode,
-            country: formData.country,
-          },
-        }])
-        .select()
-        .single();
+        .select('id')
+        .eq('email', formData.email)
+        .maybeSingle();
 
-      if (customerError) throw customerError;
+      if (existingCustomer) {
+        // Update existing customer
+        customerId = existingCustomer.id;
+        await supabase
+          .from('customers')
+          .update({
+            first_name: formData.firstName,
+            last_name: formData.lastName,
+            phone: formData.phone,
+            shipping_address: {
+              address: formData.address,
+              city: formData.city,
+              postalCode: formData.postalCode,
+              country: formData.country,
+            },
+          })
+          .eq('id', customerId);
+      } else {
+        // Create new customer
+        const { data: newCustomer, error: customerError } = await supabase
+          .from('customers')
+          .insert([{
+            email: formData.email,
+            first_name: formData.firstName,
+            last_name: formData.lastName,
+            phone: formData.phone,
+            shipping_address: {
+              address: formData.address,
+              city: formData.city,
+              postalCode: formData.postalCode,
+              country: formData.country,
+            },
+          }])
+          .select()
+          .single();
+
+        if (customerError) throw customerError;
+        customerId = newCustomer.id;
+      }
 
       const newOrderNumber = `ORD-${Date.now()}`;
       const subtotal = getTotalPrice();
@@ -143,12 +172,15 @@ export function Checkout({ isOpen, onClose }: CheckoutProps) {
       const tax = subtotal * 0.1;
       const totalAmount = subtotal + shipping + tax;
 
+      // Get selected payment method name
+      const selectedPayment = paymentMethods.find(m => m.id === selectedPaymentMethod);
+
       // Create order
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert([{
           order_number: newOrderNumber,
-          customer_id: customer.id,
+          customer_id: customerId,
           customer_email: formData.email,
           customer_name: `${formData.firstName} ${formData.lastName}`,
           subtotal: subtotal,
@@ -157,7 +189,7 @@ export function Checkout({ isOpen, onClose }: CheckoutProps) {
           total_amount: totalAmount,
           status: 'pending',
           payment_status: 'pending',
-          currency_code: currency?.code || 'USD',
+          payment_method: selectedPayment?.name || 'Cash on Delivery',
           shipping_address: {
             address: formData.address,
             city: formData.city,
@@ -171,17 +203,21 @@ export function Checkout({ isOpen, onClose }: CheckoutProps) {
       if (orderError) throw orderError;
 
       // Create order items
-      for (const item of items) {
-        await supabase.from('order_items').insert([{
-          order_id: order.id,
-          product_id: item.product.id,
-          product_name: item.product.name,
-          product_sku: item.product.sku,
-          quantity: item.quantity,
-          unit_price: item.product.base_price,
-          total_price: item.product.base_price * item.quantity,
-        }]);
-      }
+      const orderItems = items.map(item => ({
+        order_id: order.id,
+        product_id: item.product.id,
+        product_name: item.product.name,
+        product_sku: item.product.sku,
+        quantity: item.quantity,
+        unit_price: item.product.base_price,
+        total_price: item.product.base_price * item.quantity,
+      }));
+
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(orderItems);
+
+      if (itemsError) throw itemsError;
 
       setOrderNumber(newOrderNumber);
       setOrderComplete(true);
