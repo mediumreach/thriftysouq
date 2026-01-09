@@ -202,103 +202,106 @@ export function AdminDashboard({ onPageChange }: AdminDashboardProps) {
 
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600 mt-1">Welcome back! Here's what's happening with your store.</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-600 mt-1 text-sm sm:text-base">Welcome back! Here's what's happening with your store.</p>
         </div>
         <button 
           onClick={loadDashboardData}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
+          className="self-start inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors shadow-sm text-sm"
         >
           <Activity className="h-4 w-4" />
-          Refresh Data
+          Refresh
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Main Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {statCards.map((stat, index) => {
           const Icon = stat.icon;
           return (
             <div 
               key={index} 
-              className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 group"
+              className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300"
             >
-              <div className="flex items-start justify-between mb-4">
-                <div className={`${stat.bgColor} p-3 rounded-xl group-hover:scale-110 transition-transform duration-300`}>
-                  <Icon className={`h-6 w-6 ${stat.iconColor}`} />
+              <div className="flex items-start justify-between mb-3 sm:mb-4">
+                <div className={`${stat.bgColor} p-2 sm:p-3 rounded-lg sm:rounded-xl`}>
+                  <Icon className={`h-4 w-4 sm:h-6 sm:w-6 ${stat.iconColor}`} />
                 </div>
                 {stat.trend === 'up' && (
-                  <div className="flex items-center gap-1 text-emerald-600 text-sm font-medium">
-                    <TrendingUp className="h-4 w-4" />
-                  </div>
+                  <TrendingUp className="h-4 w-4 text-emerald-600" />
                 )}
                 {stat.trend === 'warning' && (
-                  <div className="flex items-center gap-1 text-amber-600 text-sm font-medium">
-                    <AlertTriangle className="h-4 w-4" />
-                  </div>
+                  <AlertTriangle className="h-4 w-4 text-amber-600" />
                 )}
               </div>
-              <p className="text-gray-600 text-sm font-medium mb-1">{stat.title}</p>
-              <p className="text-3xl font-bold text-gray-900 mb-2">{stat.value}</p>
-              <p className="text-sm text-gray-500">{stat.subtext}</p>
+              <p className="text-gray-600 text-xs sm:text-sm font-medium mb-1">{stat.title}</p>
+              <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1">{stat.value}</p>
+              <p className="text-xs sm:text-sm text-gray-500 truncate">{stat.subtext}</p>
             </div>
           );
         })}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-6 text-white">
-          <div className="flex items-center justify-between mb-4">
-            <Clock className="h-8 w-8 opacity-80" />
-            <span className="text-3xl font-bold">{stats.pendingOrders}</span>
+      {/* Secondary Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+        <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl sm:rounded-2xl p-4 sm:p-6 text-white">
+          <div className="flex items-center justify-between mb-3">
+            <Clock className="h-6 w-6 sm:h-8 sm:w-8 opacity-80" />
+            <span className="text-2xl sm:text-3xl font-bold">{stats.pendingOrders}</span>
           </div>
-          <p className="font-medium">Pending Orders</p>
-          <p className="text-sm opacity-80 mt-1">Awaiting processing</p>
+          <p className="font-medium text-sm sm:text-base">Pending Orders</p>
+          <p className="text-xs sm:text-sm opacity-80 mt-1">Awaiting processing</p>
         </div>
 
-        <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-6 text-white">
-          <div className="flex items-center justify-between mb-4">
-            <Users className="h-8 w-8 opacity-80" />
-            <span className="text-3xl font-bold">{stats.totalCustomers}</span>
+        <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl sm:rounded-2xl p-4 sm:p-6 text-white">
+          <div className="flex items-center justify-between mb-3">
+            <Users className="h-6 w-6 sm:h-8 sm:w-8 opacity-80" />
+            <span className="text-2xl sm:text-3xl font-bold">{stats.totalCustomers}</span>
           </div>
-          <p className="font-medium">Total Customers</p>
-          <p className="text-sm opacity-80 mt-1">Registered users</p>
+          <p className="font-medium text-sm sm:text-base">Total Customers</p>
+          <p className="text-xs sm:text-sm opacity-80 mt-1">Registered users</p>
         </div>
 
-        <div className="bg-gradient-to-br from-rose-500 to-pink-600 rounded-2xl p-6 text-white">
-          <div className="flex items-center justify-between mb-4">
-            <AlertTriangle className="h-8 w-8 opacity-80" />
-            <span className="text-3xl font-bold">{stats.lowStockCount}</span>
+        <div className="bg-gradient-to-br from-rose-500 to-pink-600 rounded-xl sm:rounded-2xl p-4 sm:p-6 text-white">
+          <div className="flex items-center justify-between mb-3">
+            <AlertTriangle className="h-6 w-6 sm:h-8 sm:w-8 opacity-80" />
+            <span className="text-2xl sm:text-3xl font-bold">{stats.lowStockCount}</span>
           </div>
-          <p className="font-medium">Low Stock Items</p>
-          <p className="text-sm opacity-80 mt-1">Need restocking</p>
+          <p className="font-medium text-sm sm:text-base">Low Stock Items</p>
+          <p className="text-xs sm:text-sm opacity-80 mt-1">Need restocking</p>
         </div>
       </div>
 
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="p-6 border-b border-gray-100">
+      {/* Orders and Products */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        {/* Recent Orders */}
+        <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="p-4 sm:p-6 border-b border-gray-100">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold text-gray-900">Recent Orders</h2>
-              <button className="text-emerald-600 hover:text-emerald-700 text-sm font-medium flex items-center gap-1">
-                View All <ArrowUpRight className="h-4 w-4" />
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900">Recent Orders</h2>
+              <button 
+                onClick={() => onPageChange('orders')}
+                className="text-emerald-600 hover:text-emerald-700 text-xs sm:text-sm font-medium flex items-center gap-1"
+              >
+                View All <ArrowUpRight className="h-3 w-3 sm:h-4 sm:w-4" />
               </button>
             </div>
           </div>
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-gray-100 max-h-80 overflow-y-auto">
             {recentOrders.length > 0 ? (
               recentOrders.map((order) => (
-                <div key={order.id} className="p-4 hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-semibold text-gray-900">{order.order_number}</p>
-                      <p className="text-sm text-gray-600">{order.customer_name}</p>
+                <div key={order.id} className="p-3 sm:p-4 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-gray-900 text-sm sm:text-base truncate">{order.order_number}</p>
+                      <p className="text-xs sm:text-sm text-gray-600 truncate">{order.customer_name}</p>
                     </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-gray-900">{formatCurrency(order.total_amount)}</p>
+                    <div className="text-right flex-shrink-0">
+                      <p className="font-semibold text-gray-900 text-sm sm:text-base">{formatCurrency(order.total_amount)}</p>
                       <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${getStatusColor(order.status)}`}>
                         {order.status}
                       </span>
@@ -308,39 +311,43 @@ export function AdminDashboard({ onPageChange }: AdminDashboardProps) {
                 </div>
               ))
             ) : (
-              <div className="p-8 text-center text-gray-500">
-                <ShoppingCart className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                <p>No orders yet</p>
+              <div className="p-6 sm:p-8 text-center text-gray-500">
+                <ShoppingCart className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-3 opacity-50" />
+                <p className="text-sm">No orders yet</p>
               </div>
             )}
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="p-6 border-b border-gray-100">
+        {/* Top Products */}
+        <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="p-4 sm:p-6 border-b border-gray-100">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold text-gray-900">Top Products</h2>
-              <button className="text-emerald-600 hover:text-emerald-700 text-sm font-medium flex items-center gap-1">
-                View All <ArrowUpRight className="h-4 w-4" />
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900">Top Products</h2>
+              <button 
+                onClick={() => onPageChange('products')}
+                className="text-emerald-600 hover:text-emerald-700 text-xs sm:text-sm font-medium flex items-center gap-1"
+              >
+                View All <ArrowUpRight className="h-3 w-3 sm:h-4 sm:w-4" />
               </button>
             </div>
           </div>
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-gray-100 max-h-80 overflow-y-auto">
             {topProducts.length > 0 ? (
               topProducts.map((product) => (
-                <div key={product.id} className="p-4 hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center gap-4">
+                <div key={product.id} className="p-3 sm:p-4 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center gap-3">
                     <img
                       src={product.images?.[0] || 'https://images.pexels.com/photos/1536619/pexels-photo-1536619.jpeg?auto=compress&cs=tinysrgb&w=100'}
                       alt={product.name}
-                      className="w-12 h-12 rounded-xl object-cover"
+                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl object-cover flex-shrink-0"
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 truncate">{product.name}</p>
-                      <p className="text-sm text-gray-600">{formatCurrency(product.base_price)}</p>
+                      <p className="font-semibold text-gray-900 text-sm sm:text-base truncate">{product.name}</p>
+                      <p className="text-xs sm:text-sm text-gray-600">{formatCurrency(product.base_price)}</p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium text-gray-900">{product.review_count} reviews</p>
+                    <div className="text-right flex-shrink-0">
+                      <p className="text-xs sm:text-sm font-medium text-gray-900">{product.review_count} reviews</p>
                       <p className={`text-xs ${product.stock_quantity <= 10 ? 'text-red-600' : 'text-gray-500'}`}>
                         {product.stock_quantity} in stock
                       </p>
@@ -349,52 +356,53 @@ export function AdminDashboard({ onPageChange }: AdminDashboardProps) {
                 </div>
               ))
             ) : (
-              <div className="p-8 text-center text-gray-500">
-                <Package className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                <p>No products yet</p>
+              <div className="p-6 sm:p-8 text-center text-gray-500">
+                <Package className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-3 opacity-50" />
+                <p className="text-sm">No products yet</p>
               </div>
             )}
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      {/* Quick Actions */}
+      <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
+        <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">Quick Actions</h2>
+        <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-4">
           <button 
             onClick={() => onPageChange('products')}
-            className="p-4 border border-gray-200 rounded-xl hover:bg-emerald-50 hover:border-emerald-200 transition-all group"
+            className="p-3 sm:p-4 border border-gray-200 rounded-lg sm:rounded-xl hover:bg-emerald-50 hover:border-emerald-200 transition-all group"
           >
-            <Package className="h-6 w-6 text-gray-600 group-hover:text-emerald-600 mb-2" />
-            <p className="font-medium text-gray-900 group-hover:text-emerald-700">Add Product</p>
+            <Package className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600 group-hover:text-emerald-600 mx-auto mb-1 sm:mb-2" />
+            <p className="font-medium text-gray-900 group-hover:text-emerald-700 text-xs sm:text-sm text-center">Products</p>
           </button>
           <button 
             onClick={() => onPageChange('categories')}
-            className="p-4 border border-gray-200 rounded-xl hover:bg-lime-50 hover:border-lime-200 transition-all group"
+            className="p-3 sm:p-4 border border-gray-200 rounded-lg sm:rounded-xl hover:bg-lime-50 hover:border-lime-200 transition-all group"
           >
-            <FolderTree className="h-6 w-6 text-gray-600 group-hover:text-lime-600 mb-2" />
-            <p className="font-medium text-gray-900 group-hover:text-lime-700">Categories</p>
+            <FolderTree className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600 group-hover:text-lime-600 mx-auto mb-1 sm:mb-2" />
+            <p className="font-medium text-gray-900 group-hover:text-lime-700 text-xs sm:text-sm text-center">Categories</p>
           </button>
           <button 
             onClick={() => onPageChange('orders')}
-            className="p-4 border border-gray-200 rounded-xl hover:bg-blue-50 hover:border-blue-200 transition-all group"
+            className="p-3 sm:p-4 border border-gray-200 rounded-lg sm:rounded-xl hover:bg-blue-50 hover:border-blue-200 transition-all group"
           >
-            <ShoppingCart className="h-6 w-6 text-gray-600 group-hover:text-blue-600 mb-2" />
-            <p className="font-medium text-gray-900 group-hover:text-blue-700">View Orders</p>
+            <ShoppingCart className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600 group-hover:text-blue-600 mx-auto mb-1 sm:mb-2" />
+            <p className="font-medium text-gray-900 group-hover:text-blue-700 text-xs sm:text-sm text-center">Orders</p>
           </button>
           <button 
             onClick={() => onPageChange('reviews')}
-            className="p-4 border border-gray-200 rounded-xl hover:bg-purple-50 hover:border-purple-200 transition-all group"
+            className="p-3 sm:p-4 border border-gray-200 rounded-lg sm:rounded-xl hover:bg-purple-50 hover:border-purple-200 transition-all group"
           >
-            <Star className="h-6 w-6 text-gray-600 group-hover:text-purple-600 mb-2" />
-            <p className="font-medium text-gray-900 group-hover:text-purple-700">Moderate Reviews</p>
+            <Star className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600 group-hover:text-purple-600 mx-auto mb-1 sm:mb-2" />
+            <p className="font-medium text-gray-900 group-hover:text-purple-700 text-xs sm:text-sm text-center">Reviews</p>
           </button>
           <button 
             onClick={() => onPageChange('hero-settings')}
-            className="p-4 border border-gray-200 rounded-xl hover:bg-amber-50 hover:border-amber-200 transition-all group"
+            className="p-3 sm:p-4 border border-gray-200 rounded-lg sm:rounded-xl hover:bg-amber-50 hover:border-amber-200 transition-all group col-span-3 sm:col-span-1"
           >
-            <BarChart3 className="h-6 w-6 text-gray-600 group-hover:text-amber-600 mb-2" />
-            <p className="font-medium text-gray-900 group-hover:text-amber-700">Hero Settings</p>
+            <BarChart3 className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600 group-hover:text-amber-600 mx-auto mb-1 sm:mb-2" />
+            <p className="font-medium text-gray-900 group-hover:text-amber-700 text-xs sm:text-sm text-center">Hero</p>
           </button>
         </div>
       </div>
